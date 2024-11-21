@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "DEFENDER_URL": "https://defender.safetorun.com",
+    "WEBHOOK_SECRET": "@Microsoft.KeyVault(SecretUri=https://ghactionskv.vault.azure.net/secrets/WEBHOOK-SECRET)",
+    "PRIVATE_KEY": "@Microsoft.KeyVault(SecretUri=https://ghactionskv.vault.azure.net/secrets/PRIVATE-KEY)",
+    "APP_ID" : "1064186"
+  }
+}

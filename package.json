@@ -1,0 +1,34 @@
+{
+  "name": "prompt-defender-webhook",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/functions/*.js",
+  "description": "A github application which will allow pull requests and  code repepositories to interact with prompt defender, integrating prLLM Security practices into the CI/CD pipeline",
+  "author": "dllewellyn",
+  "license": "ISC",
+  "homepage": "https://github.com//",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "start": "func start",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nock": "^14.0.0-beta.5",
+    "probot": "^13.4.0",
+    "smee-client": "^2.0.0",
+    "azure-functions-core-tools": "^4.x"
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "type": "module",
+  "dependencies": {
+    "@probot/adapter-azure-functions": "^1.1.0",
+    "@azure/functions": "^4.0.0"
+  }
+}
