@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation should be updated and added to the README.md file as new features are developed.
+Documentation should be updated and added to the README.md file as new features are developed to describe them
 
 ## Coding Standards
 
@@ -51,3 +51,7 @@ And the response
 ## Logging
 
 Logging should be extensive, using `app.log`
+
+## Deployment
+
+ The deploy script is in deploy.sh - if changes are required which need an update, add to here. 
