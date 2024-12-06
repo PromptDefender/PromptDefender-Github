@@ -25,3 +25,18 @@ az bicep install
 bash deploy.sh 
 
 func azure functionapp publish $FUNCTION_APP_NAME
+```
+
+2. Update the deployment script to handle both JavaScript and Python projects:
+
+The `deploy.sh` script has been updated to handle both JavaScript and Python projects. Ensure that the script is executable:
+
+```sh
+chmod +x deploy.sh
+```
+
+3. Run the deployment script:
+
+```sh
+./deploy.sh
+```

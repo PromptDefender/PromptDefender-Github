@@ -2,7 +2,7 @@
   "name": "prompt-defender-webhook",
   "version": "1.0.0",
   "private": true,
-  "main": "src/functions/*.js",
+  "main": "js/src/functions/*.js",
   "description": "A github application which will allow pull requests and  code repepositories to interact with prompt defender, integrating prLLM Security practices into the CI/CD pipeline",
   "author": "dllewellyn",
   "license": "ISC",
@@ -14,7 +14,9 @@
   ],
   "scripts": {
     "start": "func start",
-    "test": "node --test"
+    "test": "node --test",
+    "start:py": "python py/src/sample_app.py",
+    "test:py": "python -m unittest discover py/test"
   },
   "devDependencies": {
     "jest": "^29.7.0",

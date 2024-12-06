@@ -12,6 +12,41 @@ npm install
 npm start
 ```
 
+## Project Structure
+
+```sh
+.
+├── js
+│   ├── src
+│   │   ├── callback
+│   │   │   ├── api.js
+│   │   │   └── app.js
+│   │   ├── functions
+│   │   │   └── pr-callback.js
+│   │   └── index.js
+│   └── test
+│       └── index.test.js
+└── py
+    ├── src
+    │   └── sample_app.py
+    └── test
+        └── test_sample_app.py
+```
+
+## Running the JavaScript Project
+
+```sh
+func start 
+```
+
+## Running the Sample Python Application
+
+To run the sample Python application, navigate to the `py/src` directory and execute the following command:
+
+```sh
+python sample_app.py
+```
+
 ## Contributing
 
 If you have suggestions for how prompt-defender-webhook could be improved, or want to report a bug, open an issue! We'd love all and any contributions.
