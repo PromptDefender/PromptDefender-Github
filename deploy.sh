@@ -38,7 +38,7 @@ func azure functionapp publish $FUNCTION_APP_NAME
 # Deploy the JavaScript project
 echo "Deploying JavaScript project..."
 pushd js
-npm install
+npm install --only=prod
 npm run build --if-present
 popd
 

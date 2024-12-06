@@ -2,7 +2,7 @@
   "name": "prompt-defender-webhook",
   "version": "1.0.0",
   "private": true,
-  "main": "js/src/index.js",
+  "main": "js/src/functions/*.js",
   "description": "A github application which will allow pull requests and  code repepositories to interact with prompt defender, integrating prLLM Security practices into the CI/CD pipeline",
   "author": "dllewellyn",
   "license": "ISC",

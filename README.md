@@ -35,14 +35,8 @@ npm start
 
 ## Running the JavaScript Project
 
-To run the JavaScript project, navigate to the `js` directory and execute the following commands:
-
 ```sh
-# Install dependencies
-npm install
-
-# Run the bot
-npm start
+func start 
 ```
 
 ## Running the Sample Python Application
