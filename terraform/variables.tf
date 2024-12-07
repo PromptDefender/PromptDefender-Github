@@ -43,6 +43,7 @@ variable "private_key" {
 variable "app_insights_name" {
   description = "The name of the Application Insights resource"
   type        = string
+  default = "prompt-shield-app-insights"
 }
 
 variable "defender_url" {
