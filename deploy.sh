@@ -7,6 +7,12 @@ if [ -z "$RESOURCE_GROUP" ] || [ -z "$LOCATION" ] || [ -z "$KEY_VAULT_NAME" ] ||
   exit 1
 fi
 
+# Initialize Terraform
+terraform init
+
+# Apply Terraform configuration
+terraform apply -var "resource_group_name=$RESOURCE_GROUP" -var "location=$LOCATION" -var "key_vault_name=$KEY_VAULT_NAME" -var "webhook_secret=$WEBHOOK_SECRET" -var "private_key=$PRIVATE_KEY" -var "nodejs_function_app_name=$FUNCTION_APP_NAME" -var "storage_account_name=$STORAGE_ACCOUNT_NAME" -var "defender_url=https://defender.safetorun.com" -auto-approve
+
 # Get the logged in user ID
 USER_ID=$(az ad signed-in-user show --query id -o tsv)
 
