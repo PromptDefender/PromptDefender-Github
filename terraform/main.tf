@@ -1,5 +1,16 @@
+terraform {
+  backend "remote" {
+    organization = "PromptShield"
+
+    workspaces {
+      name = "PromptDefender-Github"
+    }
+  }
+}
+
 provider "azurerm" {
   features {}
+  subscription_id = var.subscriptionId
 }
 
 resource "azurerm_resource_group" "main" {
