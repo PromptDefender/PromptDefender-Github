@@ -26,11 +26,6 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_storage_queue" "main" {
-  name                 = var.queue_name
-  storage_account_name = azurerm_storage_account.main.name
-}
-
 resource "azurerm_function_app" "nodejs" {
   name                       = var.nodejs_function_app_name
   resource_group_name        = azurerm_resource_group.main.name
@@ -74,18 +69,3 @@ resource "azurerm_application_insights" "main" {
   application_type    = "web"
 }
 
-resource "azurerm_function_app" "python" {
-  name                       = var.python_function_app_name
-  resource_group_name        = azurerm_resource_group.main.name
-  location                   = azurerm_resource_group.main.location
-  storage_account_name       = azurerm_storage_account.main.name
-  storage_account_access_key = azurerm_storage_account.main.primary_access_key
-  os_type                    = "linux"
-  runtime_stack              = "python"
-  version                    = "~3.8"
-  app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME" = "python"
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.main.instrumentation_key
-    "DEFENDER_URL" = var.defender_url
-  }
-}

@@ -13,24 +13,16 @@ variable "storage_account_name" {
   type        = string
 }
 
-variable "queue_name" {
-  description = "The name of the storage queue"
-  type        = string
-}
-
 variable "nodejs_function_app_name" {
   description = "The name of the Node.js function app"
   type        = string
-}
-
-variable "python_function_app_name" {
-  description = "The name of the Python function app"
-  type        = string
+  default    = "prompt-shield-github-app"
 }
 
 variable "key_vault_name" {
   description = "The name of the Key Vault"
   type        = string
+  default    = "ghactionskv"
 }
 
 variable "tenant_id" {
