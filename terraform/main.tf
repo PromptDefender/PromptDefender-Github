@@ -77,8 +77,8 @@ resource "azurerm_key_vault" "main" {
 
 
   access_policy {
-    tenant_id = azurerm_linux_web_app.app_service.identity[0].tenant_id
-    object_id = azurerm_linux_web_app.app_service.identity[0].principal_id
+    tenant_id = azurerm_function_app.nodejs.identity[0].tenant_id
+    object_id = azurerm_function_app.nodejs.identity[0].principal_id
 
     secret_permissions = [
       "Get",
@@ -95,7 +95,7 @@ resource "azurerm_key_vault" "main" {
       "Set",
     ]
   }
-  
+
   network_acls {
     default_action = "Deny"
     bypass         = "AzureServices"
