@@ -34,7 +34,7 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_app_service_plan" "main" {
+resource "azurerm_service_plan" "main" {
   name                = "${var.nodejs_function_app_name}-plan"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
@@ -52,10 +52,7 @@ resource "azurerm_linux_function_app" "nodejs" {
   location                   = azurerm_resource_group.main.location
   storage_account_name       = azurerm_storage_account.main.name
   storage_account_access_key = azurerm_storage_account.main.primary_access_key
-  service_plan_id            = azurerm_app_service_plan.main.id
-  site_config {
-    linux_fx_version = "node|14"
-  }
+  service_plan_id            = azurerm_service_plan.main.id
   identity {
     type = "SystemAssigned"
   }
@@ -72,7 +69,6 @@ resource "random_string" "suffix" {
 }
 
 resource "azurerm_key_vault" "main" {
-
   name                =  "${var.key_vault_name}-${random_string.suffix.result}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
@@ -80,19 +76,19 @@ resource "azurerm_key_vault" "main" {
   sku_name            = "standard"
 
   depends_on = [
-    azurerm_function_app.nodejs
+    azurerm_linux_function_app.nodejs
   ]
 
   access_policy {
-        tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azurerm_function_app.nodejs.identity[0].principal_id
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = azurerm_linux_function_app.nodejs.identity[0].principal_id
 
     secret_permissions = [
       "Get",
     ]
   }
 
-    access_policy {
+  access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
 
@@ -111,8 +107,6 @@ resource "azurerm_key_vault" "main" {
       "0.0.0.0/0"
     ]
   }
-
-
 }
 
 resource "azurerm_key_vault_secret" "webhook_secret" {
