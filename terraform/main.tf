@@ -53,10 +53,14 @@ resource "azurerm_linux_function_app" "nodejs" {
     type = "SystemAssigned"
   }
 
-  site_config {}
+  site_config {
+    application_stack {
+      node_version = "22"
+    }
+  }
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "node"
-    "WEBSITE_NODE_DEFAULT_VERSION" = "~14"
+    "WEBSITE_NODE_DEFAULT_VERSION" = "~22"
     "DEFENDER_URL" = var.defender_url
   }
 }
