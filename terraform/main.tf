@@ -56,6 +56,10 @@ resource "azurerm_function_app" "nodejs" {
   site_config {
     linux_fx_version = "node|14"
   }
+  identity {
+    type = "SystemAssigned"
+  }
+
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "node"
     "WEBSITE_NODE_DEFAULT_VERSION" = "~14"
