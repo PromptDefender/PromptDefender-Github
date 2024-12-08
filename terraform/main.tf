@@ -26,15 +26,29 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = "LRS"
 }
 
+resource "azurerm_app_service_plan" "main" {
+  name                = "${var.nodejs_function_app_name}-plan"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  kind                = "FunctionApp"
+  reserved            = true
+  sku {
+    tier = "Dynamic"
+    size = "Y1"
+  }
+}
+
 resource "azurerm_function_app" "nodejs" {
   name                       = var.nodejs_function_app_name
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
   storage_account_name       = azurerm_storage_account.main.name
   storage_account_access_key = azurerm_storage_account.main.primary_access_key
+  app_service_plan_id        = azurerm_app_service_plan.main.id
   os_type                    = "linux"
-  runtime_stack              = "node"
-  version                    = "~14"
+  site_config {
+    linux_fx_version = "node|14"
+  }
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "node"
     "WEBSITE_NODE_DEFAULT_VERSION" = "~14"
@@ -68,4 +82,3 @@ resource "azurerm_application_insights" "main" {
   resource_group_name = azurerm_resource_group.main.name
   application_type    = "web"
 }
-
