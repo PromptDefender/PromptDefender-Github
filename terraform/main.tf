@@ -49,6 +49,7 @@ resource "azurerm_linux_function_app" "nodejs" {
   storage_account_name       = azurerm_storage_account.main.name
   storage_account_access_key = azurerm_storage_account.main.primary_access_key
   service_plan_id            = azurerm_service_plan.main.id
+  
   identity {
     type = "SystemAssigned"
   }
@@ -59,11 +60,9 @@ resource "azurerm_linux_function_app" "nodejs" {
     }
   }
   app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME" = "node"
-    "WEBSITE_NODE_DEFAULT_VERSION" = "~20"
     "DEFENDER_URL" = var.defender_url
   }
-}
+} 
 
 resource "random_string" "suffix" {
   length  = 8
