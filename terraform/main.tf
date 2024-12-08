@@ -81,7 +81,7 @@ resource "azurerm_key_vault" "main" {
   tenant_id           = var.tenant_id
   sku_name            = "standard"
 
-  depeneds_on = [
+  depends_on = [
     azurerm_function_app.nodejs
   ]
 
