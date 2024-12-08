@@ -2,10 +2,10 @@ terraform {
    required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.52.0"
+      version = "4.13.0"
     }
   }
-  
+
   backend "remote" {
     organization = "PromptShield"
 
