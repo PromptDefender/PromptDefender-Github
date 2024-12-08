@@ -46,21 +46,19 @@ resource "azurerm_app_service_plan" "main" {
   }
 }
 
-resource "azurerm_function_app" "nodejs" {
+resource "azurerm_linux_function_app" "nodejs" {
   name                       = var.nodejs_function_app_name
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
   storage_account_name       = azurerm_storage_account.main.name
   storage_account_access_key = azurerm_storage_account.main.primary_access_key
-  app_service_plan_id        = azurerm_app_service_plan.main.id
-  os_type                    = "linux"
+  service_plan_id            = azurerm_app_service_plan.main.id
   site_config {
     linux_fx_version = "node|14"
   }
   identity {
     type = "SystemAssigned"
   }
-
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "node"
     "WEBSITE_NODE_DEFAULT_VERSION" = "~14"
@@ -87,7 +85,7 @@ resource "azurerm_key_vault" "main" {
 
   access_policy {
         tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azurerm_function_app.nodejs.identity.principal_id
+    object_id = azurerm_function_app.nodejs.identity[0].principal_id
 
     secret_permissions = [
       "Get",
