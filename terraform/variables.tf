@@ -35,6 +35,11 @@ variable "webhook_secret" {
   type        = string
 }
 
+variable "subscriptionId" {
+  description = "The subscription ID for azure"
+  type        = string
+}
+
 variable "private_key" {
   description = "The private key"
   type        = string
