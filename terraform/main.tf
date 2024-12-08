@@ -55,12 +55,12 @@ resource "azurerm_linux_function_app" "nodejs" {
 
   site_config {
     application_stack {
-      node_version = "22"
+      node_version = "20"
     }
   }
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "node"
-    "WEBSITE_NODE_DEFAULT_VERSION" = "~22"
+    "WEBSITE_NODE_DEFAULT_VERSION" = "~20"
     "DEFENDER_URL" = var.defender_url
   }
 }
