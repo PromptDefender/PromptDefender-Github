@@ -9,7 +9,3 @@ output "nodejs_function_app_name" {
 output "key_vault_name" {
   value = azurerm_key_vault.main.name
 }
-
-output "app_insights_instrumentation_key" {
-  value = azurerm_application_insights.main.instrumentation_key
-}
