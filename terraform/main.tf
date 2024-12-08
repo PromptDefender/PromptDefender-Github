@@ -74,11 +74,16 @@ resource "random_string" "suffix" {
 }
 
 resource "azurerm_key_vault" "main" {
+
   name                =  "${var.key_vault_name}-${random_string.suffix.result}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   tenant_id           = var.tenant_id
   sku_name            = "standard"
+
+  depeneds_on = [
+    azurerm_function_app.nodejs
+  ]
 
   access_policy {
         tenant_id = data.azurerm_client_config.current.tenant_id
