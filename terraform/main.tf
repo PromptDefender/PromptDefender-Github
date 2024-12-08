@@ -20,6 +20,7 @@ provider "azurerm" {
   subscription_id = var.subscriptionId
 }
 
+
 resource "azurerm_resource_group" "main" {
   name     = var.resource_group_name
   location = var.location
@@ -79,10 +80,9 @@ resource "azurerm_key_vault" "main" {
   tenant_id           = var.tenant_id
   sku_name            = "standard"
 
-
   access_policy {
-    tenant_id = azurerm_function_app.nodejs.identity[0].tenant_id
-    object_id = azurerm_function_app.nodejs.identity[0].principal_id
+        tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = azurerm_function_app.nodejs.identity.principal_id
 
     secret_permissions = [
       "Get",
