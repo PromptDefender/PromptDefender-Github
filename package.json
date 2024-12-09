@@ -15,8 +15,8 @@
   "scripts": {
     "start": "func start",
     "test": "node --test",
-    "start:py": "python py/src/sample_app.py",
-    "test:py": "python -m unittest discover py/test"
+    "deploy" : "func azure functionapp publish prompt-shield-github-app --javascript",
+    "terraform:deploy": "cd terraform && terraform init && terraform apply -auto-approve"
   },
   "devDependencies": {
     "jest": "^29.7.0",
@@ -31,6 +31,6 @@
   "type": "module",
   "dependencies": {
     "@probot/adapter-azure-functions": "^1.1.0",
-    "@azure/functions": "^4.0.0"
+    "@azure/functions": "^4.6.0"
   }
 }

@@ -5,3 +5,6 @@ npm-debug.log
 .env
 coverage
 lib
+terraform/.terraform
+.secrets
+terraform/*tfstate
