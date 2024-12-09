@@ -4,7 +4,7 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  description = "The location of the resources"
+  description = "The location of the resources" 
   type        = string
 }
 
@@ -22,7 +22,6 @@ variable "nodejs_function_app_name" {
 variable "key_vault_name" {
   description = "The name of the Key Vault"
   type        = string
-  default    = "ghactionskv"
 }
 
 variable "tenant_id" {
@@ -30,18 +29,8 @@ variable "tenant_id" {
   type        = string
 }
 
-variable "webhook_secret" {
-  description = "The webhook secret"
-  type        = string
-}
-
 variable "subscriptionId" {
   description = "The subscription ID for azure"
-  type        = string
-}
-
-variable "private_key" {
-  description = "The private key"
   type        = string
 }
 
@@ -53,5 +42,20 @@ variable "app_insights_name" {
 
 variable "defender_url" {
   description = "The URL for the Defender service"
+  type        = string
+}
+
+variable "app_id" {
+  description = "The app ID for the Github application service"
+  type        = string
+}
+
+variable "private_key" {
+  description = "The private key for the github application"
+  type        = string
+}
+
+variable "webhook_secret" {
+  description = "The webhook secret for the github application"
   type        = string
 }

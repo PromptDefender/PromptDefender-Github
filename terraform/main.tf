@@ -38,89 +38,35 @@ resource "azurerm_service_plan" "main" {
   name                = "${var.nodejs_function_app_name}-plan"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  os_type             = "Linux"
+  os_type             = "Windows"
   sku_name            = "Y1"
 }
 
-resource "azurerm_linux_function_app" "nodejs" {
+resource "azurerm_windows_function_app" "nodejs" {
   name                       = var.nodejs_function_app_name
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
   storage_account_name       = azurerm_storage_account.main.name
   storage_account_access_key = azurerm_storage_account.main.primary_access_key
   service_plan_id            = azurerm_service_plan.main.id
-  
+  https_only = true
+
   identity {
     type = "SystemAssigned"
   }
 
   site_config {
     application_stack {
-      node_version = "20"
+      node_version = "~20"
     }
   }
   app_settings = {
     "DEFENDER_URL" = var.defender_url
+    "APP_ID" = var.app_id
+    "WEBHOOK_SECRET" = var.webhook_secret
+    "PRIVATE_KEY" = var.private_key
   }
 } 
-
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-}
-
-resource "azurerm_key_vault" "main" {
-  name                =  "${var.key_vault_name}-${random_string.suffix.result}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  tenant_id           = var.tenant_id
-  sku_name            = "standard"
-
-  depends_on = [
-    azurerm_linux_function_app.nodejs
-  ]
-
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azurerm_linux_function_app.nodejs.identity[0].principal_id
-
-    secret_permissions = [
-      "Get",
-    ]
-  }
-
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
-
-    secret_permissions = [
-      "Get",
-      "List",
-      "Set",
-    ]
-  }
-
-  network_acls {
-    default_action = "Deny"
-    bypass         = "AzureServices"
-
-    ip_rules = [
-      "0.0.0.0/0"
-    ]
-  }
-}
-
-resource "azurerm_key_vault_secret" "webhook_secret" {
-  name         = "WEBHOOK-SECRET"
-  value        = var.webhook_secret
-  key_vault_id = azurerm_key_vault.main.id
-}
-
-resource "azurerm_key_vault_secret" "private_key" {
-  name         = "PRIVATE-KEY"
-  value        = var.private_key
-  key_vault_id = azurerm_key_vault.main.id
-}
 
 resource "azurerm_application_insights" "main" {
   name                = var.app_insights_name
