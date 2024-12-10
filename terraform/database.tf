@@ -13,10 +13,6 @@ resource "azurerm_cosmosdb_account" "main" {
     location          = azurerm_resource_group.main.location
     failover_priority = 0
   }
-
-  capabilities {
-    name = "EnableFreeTier"
-  }
 }
 
 resource "azurerm_cosmosdb_sql_database" "main" {
