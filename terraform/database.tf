@@ -9,6 +9,10 @@ resource "azurerm_cosmosdb_account" "main" {
     consistency_level = "Session"
   }
 
+ capabilities {
+    name = "EnableServerless"
+  }
+  
   geo_location {
     location          = azurerm_resource_group.main.location
     failover_priority = 0
