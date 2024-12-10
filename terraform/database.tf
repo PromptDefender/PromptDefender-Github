@@ -65,6 +65,6 @@ resource "azurerm_cosmosdb_sql_container" "usage" {
 
 resource "azurerm_role_assignment" "cosmosdb_role" {
   scope                = azurerm_cosmosdb_account.main.id
-  role_definition_name = "Cosmos DB Account Reader Role"
-  principal_id         = azurerm_windows_function_app.nodejs.identity[0].principal_id
+  role_definition_name = "Cosmos DB Contributor"
+  principal_id         = azurerm_function_app.main.identity[0].principal_id
 }
