@@ -27,7 +27,7 @@ resource "azurerm_cosmosdb_sql_container" "installations" {
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.main.name
 
-  partition_key_path = "/installationId"
+  partition_key_paths = ["/installationId"]
   throughput         = null
 }
 
@@ -37,7 +37,8 @@ resource "azurerm_cosmosdb_sql_container" "subscriptions" {
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.main.name
 
-  partition_key_path = "/subscriptionId"
+
+  partition_key_paths = ["/subscriptionId"]
   throughput         = null
 }
 
@@ -47,7 +48,8 @@ resource "azurerm_cosmosdb_sql_container" "repository_access" {
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.main.name
 
-  partition_key_path = "/installationId"
+
+  partition_key_paths = ["/installationId"]
   throughput         = null
 }
 
@@ -57,7 +59,7 @@ resource "azurerm_cosmosdb_sql_container" "usage" {
   account_name        = azurerm_cosmosdb_account.main.name
   database_name       = azurerm_cosmosdb_sql_database.main.name
 
-  partition_key_path = "/installationId"
+  partition_key_paths = ["/installationId"]
   throughput         = null
 }
 
