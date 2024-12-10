@@ -27,9 +27,22 @@ export default (app) => {
     app.log.info(`Config is ${JSON.stringify(config)}`);
 
     const files = await retrievePullRequestFiles(context, pullRequest);
-    const promptFiles = retrievePromptsFromFiles(files, config);
+    var promptFiles = retrievePromptsFromFiles(files, config);
 
-    // Log the files that have changed 
+    // Log the files that have changed.
+    
+    const changedFiles = files.data.map(file => file.filename);
+    if (changedFiles.includes('.github/prompt-defender.yml')) {
+
+      app.log.info('Config file has changed getting all prompt files');
+      promptFiles = config.prompts.map(prompt => {
+        return {
+          filename: prompt,
+          status: 'modified',
+        };
+      });
+    }
+    
     app.log.info(`Files changed: ${files.data.map(file => file.filename)}`);
     app.log.info(`Prompt files: ${promptFiles.map(file => file.filename)}`);
 
@@ -72,6 +85,8 @@ export default (app) => {
 
       const response = await retrieveScore(prompt);
 
+      app.log.info(`Prompt response: ${response}`);
+
       app.log.info(`Prompt score: ${response.score}`);
 
       if (response.score < config.threshold) {
@@ -109,7 +124,7 @@ async function setFailedStatus(context, pullRequest, file, response, config, fil
     name: 'Prompt Defence check',
     head_sha: pullRequest.head.sha,
     status: 'completed',
-    details_url: `https://defender.safetorun.com/score/${fileHash}`,
+    details_url: `https://pdappservice.azurewebsites.net/score/${fileHash}`,
     conclusion: 'failure',
     output: {
       title: 'Checks Failed',

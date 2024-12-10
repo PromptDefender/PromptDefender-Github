@@ -16,7 +16,8 @@
     "start": "func start",
     "test": "node --test",
     "deploy" : "func azure functionapp publish prompt-shield-github-app --javascript",
-    "terraform:deploy": "cd terraform && terraform init && terraform apply -auto-approve"
+    "terraform:deploy": "cd terraform && terraform init && terraform apply -auto-approve",
+    "prepare": "bash prepare.sh"
   },
   "devDependencies": {
     "jest": "^29.7.0",
