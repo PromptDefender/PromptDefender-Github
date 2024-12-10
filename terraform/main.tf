@@ -65,7 +65,7 @@ resource "azurerm_windows_function_app" "nodejs" {
     "APP_ID" = var.app_id
     "WEBHOOK_SECRET" = var.webhook_secret
     "PRIVATE_KEY" = var.private_key
-    "COSMOS_CONNECTION_STRING" = azurerm_cosmosdb_account.main.connection_strings[0]
+    "COSMOS_CONNECTION_STRING" = azurerm_cosmosdb_account.main.primary_sql_connection_string
 
   }
 } 
