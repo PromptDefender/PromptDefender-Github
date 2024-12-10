@@ -3,18 +3,22 @@ import crypto from 'crypto';
 import { retrieveScore } from './api.js';
 
 const DEFENDER_URL = process.env.DEFENDER_URL;
+const PROMPT_DEFENDER_CONFIG_PATH = '.github/prompt-defender.yml';
+const PROMPT_DEFENCE_CHECK_NAME = 'Prompt Defence check';
+const PROMPT_DEFENCE_CHECK_TITLE = 'Checking prompts';
+const PROMPT_DEFENCE_CHECK_SUMMARY = 'Checking prompts for security vulnerabilities';
+const PROMPT_DEFENCE_CHECK_TEXT = 'Checking prompts for security vulnerabilities';
 
 /**
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
  */
 
-
 async function loadConfig(context, branchName) {
   const { data: fileContent } = await context.octokit.repos.getContent({
     owner: context.repo().owner,
     repo: context.repo().repo,
-    path: '.github/prompt-defender.yml',
+    path: PROMPT_DEFENDER_CONFIG_PATH,
     ref: branchName,
   });
 
@@ -37,7 +41,7 @@ const postSuccessStatus = async (context, pullRequest) => {
   await context.octokit.checks.create({
     owner: context.repo().owner,
     repo: context.repo().repo,
-    name: 'Prompt Defence check',
+    name: PROMPT_DEFENCE_CHECK_NAME,
     head_sha: pullRequest.head.sha,
     status: 'completed',
     conclusion: 'success',
@@ -54,17 +58,16 @@ const postStartingStatus = async (context, pullRequest) => {
   return await context.octokit.checks.create({
     owner: context.repo().owner,
     repo: context.repo().repo,
-    name: 'Prompt Defence check',
+    name: PROMPT_DEFENCE_CHECK_NAME,
     head_sha: pullRequest.head.sha,
     status: 'in_progress',
     output: {
-      title: 'Checking prompts',
-      summary: 'Checking prompts for security vulnerabilities',
-      text: 'Checking prompts for security vulnerabilities',
+      title: PROMPT_DEFENCE_CHECK_TITLE,
+      summary: PROMPT_DEFENCE_CHECK_SUMMARY,
+      text: PROMPT_DEFENCE_CHECK_TEXT,
     },
   });
 };
-
 
 export default (app) => {
   app.on(['pull_request.opened', 'pull_request.synchronize'], async (context) => {
@@ -74,11 +77,11 @@ export default (app) => {
     const config = await loadConfig(context, branchName);
 
     const files = await retrievePullRequestFiles(context, pullRequest);
-    var promptFiles = retrievePromptsFromFiles(files, config);
+    let promptFiles = retrievePromptsFromFiles(files, config);
 
     const changedFiles = files.data.map(file => file.filename);
 
-    if (changedFiles.includes('.github/prompt-defender.yml')) {
+    if (changedFiles.includes(PROMPT_DEFENDER_CONFIG_PATH)) {
       promptFiles = handleConfigFileChange(app, config);
     }
 
@@ -90,8 +93,8 @@ export default (app) => {
       return;
     }
 
-    let statusCreated = await postStartingStatus(context, pullRequest);
-    app.log.info(`Responses: ${statusCreated}`);
+    const statusCreated = await postStartingStatus(context, pullRequest);
+    app.log.info(`Responses: ${JSON.stringify(statusCreated, null, 2)}`);
 
     const responses = [];
 
@@ -112,28 +115,31 @@ export default (app) => {
       });
 
       const prompt = Buffer.from(fileContent.content, 'base64').toString();
-      app.log.info(`Prompt content: ${prompt}`);
 
       const response = await retrieveScore(prompt);
-
-      app.log.info(`Prompt response: ${response}`);
       app.log.info(`Prompt score: ${response.score}`);
 
       responses.push({
-        "file": file.filename,
-        "score": response.score,
-        "explanation": response.explanation,
-        "hash": crypto.createHash('sha256').update(prompt).digest('hex'),
-        "passOrFail": response.score >= config.threshold ? 'pass' : 'fail',
+        file: file.filename,
+        score: response.score,
+        explanation: response.explanation,
+        hash: crypto.createHash('sha256').update(prompt).digest('hex'),
+        passOrFail: response.score >= config.threshold ? 'pass' : 'fail',
       });
     }
 
-    await processResults(context, pullRequest, responses, statusCreated.id);
+    await processResults(app, context, pullRequest, config.threshold, responses, statusCreated.data.id);
 
   });
 };
 
-async function processResults(context, pullRequest, responses, statusId) {
+async function processResults(app, context, pullRequest, threshold, responses, statusId) {
+
+  if (!statusId) {
+    app.log.error('Status ID is not defined. Exiting processResults.');
+    return;
+  }
+
   const failedChecks = responses.filter(response => response.passOrFail === 'fail').length;
 
   let conclusion = 'success';
@@ -142,17 +148,17 @@ async function processResults(context, pullRequest, responses, statusId) {
   }
 
   const summary = responses.map(response => {
+    const badge = response.passOrFail === 'pass' ? '![Pass](https://img.shields.io/badge/Status-Pass-green)' : '![Fail](https://img.shields.io/badge/Status-Fail-red)';
     return `
-      \`\`\`
-      ### File: ${response.file}
-      - **Score**: ${response.score}
-      - **Explanation**: ${response.explanation}
-      - **Pass/Fail**: ${response.passOrFail}
-      - [Prompt Defence - test results](https://pdappservice.azurewebsites.net/score/${response.hash})
-      \`\`\`
+    ## Prompt Defence - ${response.passOrFail.toUpperCase()} ${badge}
+    Threshold is set to ${threshold}\n
+    ### File: ${response.file}
+    - **Score**: ${response.score}
+    - **Explanation**: ${response.explanation}
+    - **Pass/Fail**: ${response.passOrFail} 
+    - [Prompt Defence - test results](https://pdappservice.azurewebsites.net/score/${response.hash})
     `;
-  }).join('\n');
-
+  }).join('\n\n'); // Ensure each section is separated by an empty line
 
   try {
     await context.octokit.checks.update({
@@ -175,8 +181,7 @@ async function processResults(context, pullRequest, responses, statusId) {
 }
 
 function retrievePromptsFromFiles(files, config) {
-  return files.data.filter((file) => config.prompts.includes(file.filename)
-  );
+  return files.data.filter((file) => config.prompts.includes(file.filename));
 }
 
 async function retrievePullRequestFiles(context, pullRequest) {
