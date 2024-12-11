@@ -67,8 +67,8 @@ resource "azurerm_cosmosdb_sql_container" "usage" {
   throughput         = null
 }
 
-resource "azurerm_role_assignment" "cosmosdb_role" {
-  scope                = azurerm_cosmosdb_account.main.id
-  role_definition_name = "Cosmos DB Contributor"
-  principal_id         = azurerm_windows_function_app.nodejs.identity[0].principal_id
-}
+# resource "azurerm_role_assignment" "cosmosdb_role" {
+#   scope                = azurerm_cosmosdb_account.main.id
+#   role_definition_name = "Cosmos DB Contributor"
+#   principal_id         = azurerm_windows_function_app.nodejs.identity[0].principal_id
+# }
