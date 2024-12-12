@@ -1,19 +1,19 @@
 import { app } from '@azure/functions';
-import { fetchFromCosmosDB, saveToCosmosDB, INSTALLATIONS_CONTAINER } from '../callback/api.js';
+import { fetchFromCosmosDB, saveToCosmosDB, INSTALLATIONS_CONTAINER, USAGE_CONTAINER } from '../callback/api.js';
 
 async function status(request, context) {
   context.log(`Http function processed request for url "${request.url}"`);
 
   try {
-    await saveToCosmosDB(context, INSTALLATIONS_CONTAINER, {
+    await saveToCosmosDB(context, USAGE_CONTAINER, {
       installationId: '123',
       month: '2022-01',
       status: 'active'
     });
 
-    const data = await fetchFromCosmosDB(context, INSTALLATIONS_CONTAINER, [
-      { name: 'installationId', value: '123' },
-      { name: 'month', value: '2022-01' }
+    const data = await fetchFromCosmosDB(context, USAGE_CONTAINER, [
+      { name: '@installationId', value: '123' },
+      { name: '@month', value: '2022-01' }
     ]);
 
     return {

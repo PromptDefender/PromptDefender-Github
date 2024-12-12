@@ -1,5 +1,7 @@
 import yaml from 'js-yaml';
 
+const DEFENDER_URL = process.env.DEFENDER_URL;
+
 export const loadConfig = async (octokit, branchName, configPath, owner, repo) => {
   const { data: fileContent } = await octokit.repos.getContent({
     owner: owner,
@@ -87,5 +89,17 @@ export async function sendSuccessStatus(context, statusId, conclusion, pullReque
       throw error;
     }
   }
+  
+  export 
+
+  async function retrieveContent(context, file, branchName) {
+    return await context.octokit.repos.getContent({
+      owner: context.repo().owner,
+      repo: context.repo().repo,
+      path: file.filename,
+      ref: branchName,
+    });
+  }
+  
   
   

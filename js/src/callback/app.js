@@ -1,5 +1,3 @@
-import crypto from 'crypto';
-import { retrieveScore } from './api.js';
 import { CosmosClient } from '@azure/cosmos';
 import {
   loadConfig,
@@ -7,7 +5,18 @@ import {
   postStartingStatus,
   retrievePullRequestFiles,
   sendSuccessStatus,
+  retrieveContent,
 } from './github.js';
+
+import {
+  fetchFromCosmosDB,
+  saveToCosmosDB,
+  USAGE_CONTAINER
+} from './api.js';
+
+import {
+  run_score
+} from '../run_score/run_score.js';
 
 /**
  * This is the main entrypoint to your Probot app
@@ -16,23 +25,73 @@ import {
 
 const client = new CosmosClient(process.env.COSMOS_CONNECTION_STRING);
 
-const DEFENDER_URL = process.env.DEFENDER_URL;
 const PROMPT_DEFENDER_CONFIG_PATH = '.github/prompt-defender.yml';
 const PROMPT_DEFENCE_CHECK_NAME = 'Prompt Defence check';
-const PROMPT_DEFENCE_CHECK_TITLE = 'Checking prompts';
-const PROMPT_DEFENCE_CHECK_SUMMARY = 'Checking prompts for security vulnerabilities';
-const PROMPT_DEFENCE_CHECK_TEXT = 'Checking prompts for security vulnerabilities';
 
+const pullRequestFunctions = (context, logger) => {
 
-const handleConfigFileChange = (app, config) => {
-  app.log.info('Config file has changed getting all prompt files');
-  return config.prompts.map(prompt => {
-    return {
-      filename: prompt,
-      status: 'modified',
-    };
-  });
-};
+  let owner = context.repo().owner;
+  let repo = context.repo().repo;
+  let branch_name = context.payload.pull_request.head.ref;
+  let octokit = context.octokit;
+  let pull_request = context.payload.pull_request;
+  let installation_id = context.payload.installation.id;
+  let repository_id = context.payload.repository.id;
+
+  return {
+    pull_request: pull_request,
+    branch_name: branch_name,
+    octokit: octokit,
+    owner: owner,
+    repo: repo,
+    loadConfig: async () => await loadConfig(
+      octokit,
+      branch_name,
+      PROMPT_DEFENDER_CONFIG_PATH,
+      owner,
+      repo
+    ),
+    retrievePullRequestFiles: async () => await retrievePullRequestFiles(
+      octokit,
+      pull_request,
+      owner,
+      repo
+    ),
+    postStartingStatus: async (checkName, checkTitle, checkSummary, checkText) => await postStartingStatus(
+      context,
+      pull_request,
+      checkName,
+      checkTitle,
+      checkSummary,
+      checkText
+    ),
+    postSuccessStatus: async () => await postSuccessStatus(
+      context,
+      context.payload.pull_request,
+      PROMPT_DEFENCE_CHECK_NAME
+    ),
+    retrieveContent: async (file) => await retrieveContent(
+      context,
+      file,
+      branch_name
+    ),
+    sendSuccessStatus: async (statusId, conclusion, failedChecks, summary) => await sendSuccessStatus(
+      context,
+      statusId,
+      conclusion,
+      context.payload.pull_request,
+      failedChecks,
+      summary
+    ),
+    recordTestRun: async (number_of_tests_run) => await recordTestRun(
+      logger,
+      installation_id,
+      repository_id,
+      number_of_tests_run,
+
+    )
+  }
+}
 
 export default (app) => {
   app.on('installation.created', async (context) => {
@@ -70,134 +129,35 @@ export default (app) => {
   });
 
   app.on(['pull_request.opened', 'pull_request.synchronize'], async (context) => {
-    const pullRequest = context.payload.pull_request;
-    const branchName = pullRequest.head.ref;
-
-    const config = await loadConfig(
-      context.octokit, 
-      branchName, 
-      PROMPT_DEFENDER_CONFIG_PATH, 
-      context.repo().owner, 
-      context.repo().repo
-    );
-
-    const files = await retrievePullRequestFiles(context.octokit, pullRequest, context.repo().owner, context.repo().repo);
-    let promptFiles = retrievePromptsFromFiles(files, config);
-
-    const changedFiles = files.data.map(file => file.filename);
-
-    if (changedFiles.includes(PROMPT_DEFENDER_CONFIG_PATH)) {
-      promptFiles = handleConfigFileChange(app, config);
-    }
-
-    app.log.info(`Files changed: ${files.data.map(file => file.filename)}`);
-    app.log.info(`Prompt files: ${promptFiles.map(file => file.filename)}`);
-
-    if (promptFiles.length === 0) {
-      await postSuccessStatus(context, pullRequest, PROMPT_DEFENCE_CHECK_NAME);
-      return;
-    }
-
-    const statusCreated = await postStartingStatus(context, pullRequest, PROMPT_DEFENCE_CHECK_NAME, PROMPT_DEFENCE_CHECK_TITLE, PROMPT_DEFENCE_CHECK_SUMMARY, PROMPT_DEFENCE_CHECK_TEXT);
-    app.log.info(`Responses: ${JSON.stringify(statusCreated, null, 2)}`);
-
-    const responses = [];
-
-    for (const file of promptFiles) {
-
-      app.log.info(`Checking file ${file.filename}`);
-
-      if (file.status === 'removed') {
-        app.log.info(`File ${file.filename} has been removed. Skipping.`);
-        continue;
-      }
-
-      const { data: fileContent } = await context.octokit.repos.getContent({
-        owner: context.repo().owner,
-        repo: context.repo().repo,
-        path: file.filename,
-        ref: branchName,
-      });
-
-      const prompt = Buffer.from(fileContent.content, 'base64').toString();
-
-      const response = await retrieveScore(prompt);
-      app.log.info(`Prompt score: ${response.score}`);
-
-      responses.push({
-        file: file.filename,
-        score: response.score,
-        explanation: response.explanation,
-        hash: crypto.createHash('sha256').update(prompt).digest('hex'),
-        passOrFail: response.score >= config.threshold ? 'pass' : 'fail',
-      });
-    }
-
-    await processResults(app, context, pullRequest, config.threshold, responses, statusCreated.data.id);
-
+    run_score(pullRequestFunctions(context, app.log), app.log);
   });
 };
 
-const processResults = async (app, context, pullRequest, threshold, responses, statusId) => {
-
-  if (!statusId) {
-    app.log.error('Status ID is not defined. Exiting processResults.');
-    return;
-  }
-
-  const failedChecks = responses.filter(response => response.passOrFail === 'fail').length;
-
-  let conclusion = 'success';
-  if (failedChecks > 0) {
-    conclusion = 'failure';
-  }
-
-  const summary = responses.map(response => {
-    const badge = response.passOrFail === 'pass' ? '![Pass](https://img.shields.io/badge/Status-Pass-green)' : '![Fail](https://img.shields.io/badge/Status-Fail-red)';
-    return `
-    ## Prompt Defence - ${response.passOrFail.toUpperCase()} ${badge}
-    Threshold is set to ${threshold}
-    
-    ### File: ${response.file}
-    - **Score**: ${response.score}
-    - **Explanation**: ${response.explanation}
-    - **Pass/Fail**: ${response.passOrFail} 
-    - [Prompt Defence - test results](${DEFENDER_URL}/score/${response.hash})
-    `;
-  }).join('\n\n'); // Ensure each section is separated by an empty line
-
-  await sendSuccessStatus(context, statusId, conclusion, pullRequest, failedChecks, summary);
-};
-
-const retrievePromptsFromFiles = (files, config) => {
-  return files.data.filter((file) => config.prompts.includes(file.filename));
-};
-
-const saveToCosmosDB = async (containerName, data) => {
-  const { container } = client.database('YourDatabaseName').container(containerName);
-  await container.items.create(data);
-};
-
-const fetchFromCosmosDB = async (containerName, query) => {
-  const { container } = client.database('YourDatabaseName').container(containerName);
-  const { resources } = await container.items.query({ query: `SELECT * FROM c WHERE c.installationId = @installationId AND c.month = @month`, parameters: query }).fetchAll();
-  return resources[0];
-};
-
-const recordTestRun = async (installationId, repositoryId) => {
+const recordTestRun = async (logger, installationId, repositoryId, number_of_tests_run) => {
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  const usageData = await fetchFromCosmosDB('Usage', { installationId, month: currentMonth });
+  const usageData = await fetchFromCosmosDB(logger, USAGE_CONTAINER, [
+    { name: "@installationId", value: installationId },
+    { name: "@month", value: currentMonth }
+  ]);
 
-  const newTestRunCount = (usageData?.testRunCount || 0) + 1;
+  if (!usageData) {
+    logger.info(`No usage data found for installation ${installationId} in month ${currentMonth}`);
+  }
+  const newTestRunCount = (usageData?.testRunCount || 0) + number_of_tests_run;
 
   const updatedUsageData = {
-    installationId,
-    repositoryId,
+    installationId: installationId,
+    repositoryId: repositoryId,
     month: currentMonth,
     testRunCount: newTestRunCount
   };
 
-  await saveToCosmosDB('Usage', updatedUsageData);
+  if (!usageData) {
+    logger.info(`Creating new usage data for installation ${installationId} in month ${currentMonth}`);
+    await saveToCosmosDB(logger, USAGE_CONTAINER, updatedUsageData);
+  } else {
+    logger.info(`Updating usage data for installation ${installationId} in month ${currentMonth}`);
+    await updateCosmosDB(logger, USAGE_CONTAINER, usageData.id, updatedUsageData);
+  }
 };
-

@@ -4,7 +4,7 @@ const client = new CosmosClient(process.env.COSMOS_CONNECTION_STRING);
 const DEFENDER_URL = process.env.DEFENDER_URL;
 const DATABASE_NAME = process.env.DATABASE_NAME;
 
-export const retrieveScore = async (prompt) => {
+export const retrieveScore = async (prompt, logFunction) => {
   return await fetch(`${DEFENDER_URL}/score`, {
     method: 'POST',
     headers: {
@@ -14,8 +14,8 @@ export const retrieveScore = async (prompt) => {
       prompt: prompt
     })
   })
-  .then(res => res.json())
-  .then(data => data.response);
+    .then(res => res.json())
+    .then(data => data.response);
 };
 
 export const SUBSCRIPTIONS_CONTAINER = 'Subscriptions';
@@ -23,31 +23,49 @@ export const REPOSITORY_ACCESS_CONTAINER = 'RepositoryAccess';
 export const USAGE_CONTAINER = 'Usage';
 export const INSTALLATIONS_CONTAINER = 'Installations';
 
-export async function saveToCosmosDB(context, container, data) {
+export async function updateCosmosDB(logger, container, id, data) {
+  const database = client.database(DATABASE_NAME);
+  const containerClient = database.container(container);
+
+  if (!containerClient || !containerClient.items) {
+    logger.error('Invalid container client or items property is undefined', { containerClient });
+    throw new Error('Invalid container client or items property is undefined');
+  }
+
+  try {
+    const { resource: updatedItem } = await containerClient.item(id).replace(data);
+    logger.info(`Updated item: ${updatedItem.id}`);
+  } catch (error) {
+    logger.error('Error updating item in CosmosDB', error);
+    throw error;
+  }
+}
+
+export async function saveToCosmosDB(logger, container, data) {
 
   const database = client.database(DATABASE_NAME);
 
   const containerClient = database.container(container);
 
   if (!containerClient || !containerClient.items) {
-    context.error('Invalid container client or items property is undefined', { containerClient });
+    logger.error('Invalid container client or items property is undefined', { containerClient });
     throw new Error('Invalid container client or items property is undefined');
   }
 
   try {
     const { resource: createdItem } = await containerClient.items.create(data);
-    context.log(`Created item: ${createdItem.id}`);
+    logger.info(`Created item: ${createdItem.id}`);
   } catch (error) {
-    context.error('Error creating item in CosmosDB', error);
+    logger.error('Error creating item in CosmosDB', error);
     throw error;
   }
 }
 
-export async function fetchFromCosmosDB(context, containerName, query) {
+export async function fetchFromCosmosDB(logger, containerName, parameters) {
   const database = client.database(DATABASE_NAME);
-  context.log("Fetching from CosmosDB", query);
+  logger.info("Fetching from CosmosDB", parameters);
 
   const containerClient = database.container(containerName);
-  const { resources } = await containerClient.items.query({query: `SELECT * FROM c`}).fetchAll();
+  const { resources } = await containerClient.items.query({ query: `SELECT * FROM c WHERE c.installationId = @installationId AND c.month = @month`, parameters: parameters }).fetchAll();
   return resources[0];
 }
