@@ -23,17 +23,20 @@ export const REPOSITORY_ACCESS_CONTAINER = 'RepositoryAccess';
 export const USAGE_CONTAINER = 'Usage';
 export const INSTALLATIONS_CONTAINER = 'Installations';
 
-export async function updateCosmosDB(logger, container, id, data) {
+export async function updateCosmosDB(logger, container, id, installationId, data) {
   const database = client.database(DATABASE_NAME);
   const containerClient = database.container(container);
+
+  logger.info(`Updating item in CosmosDB: ${id}`);
 
   if (!containerClient || !containerClient.items) {
     logger.error('Invalid container client or items property is undefined', { containerClient });
     throw new Error('Invalid container client or items property is undefined');
   }
 
+  data = { ...data, id, installationId };
   try {
-    const { resource: updatedItem } = await containerClient.item(id).replace(data);
+    const { resource: updatedItem } = await containerClient.item(id, installationId).replace(data);
     logger.info(`Updated item: ${updatedItem.id}`);
   } catch (error) {
     logger.error('Error updating item in CosmosDB', error);

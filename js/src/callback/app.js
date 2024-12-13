@@ -11,6 +11,7 @@ import {
 import {
   fetchFromCosmosDB,
   saveToCosmosDB,
+  updateCosmosDB,
   USAGE_CONTAINER
 } from './api.js';
 
@@ -143,7 +144,10 @@ const recordTestRun = async (logger, installationId, repositoryId, number_of_tes
 
   if (!usageData) {
     logger.info(`No usage data found for installation ${installationId} in month ${currentMonth}`);
+  } else {
+    logger.info(`Usage data found for installation ${installationId} in month ${currentMonth} with Id ${usageData.id} and other properties ${JSON.stringify(usageData)}`);
   }
+
   const newTestRunCount = (usageData?.testRunCount || 0) + number_of_tests_run;
 
   const updatedUsageData = {
@@ -158,6 +162,6 @@ const recordTestRun = async (logger, installationId, repositoryId, number_of_tes
     await saveToCosmosDB(logger, USAGE_CONTAINER, updatedUsageData);
   } else {
     logger.info(`Updating usage data for installation ${installationId} in month ${currentMonth}`);
-    await updateCosmosDB(logger, USAGE_CONTAINER, usageData.id, updatedUsageData);
+    await updateCosmosDB(logger, USAGE_CONTAINER, usageData.id, installationId, updatedUsageData);
   }
 };
