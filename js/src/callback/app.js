@@ -10,6 +10,7 @@ import {
 
 import {
   fetchFromCosmosDB,
+  INSTALLATIONS_CONTAINER,
   saveToCosmosDB,
   updateCosmosDB,
   USAGE_CONTAINER
@@ -106,27 +107,76 @@ export default (app) => {
       accountId,
       accountType,
       createdAt: new Date().toISOString(),
-      repositoriesCount: repositories.length
+      repositoriesCount: repositories.length,
+      organization: context.payload.organization,
+      requester: context.payload.requester,
+      sender: context.payload.sender,
+      enterprise: context.payload.enterprise,
+      repositories: context.payload.repositories,
+      status: 'created'
     };
 
-    await saveToCosmosDB('Installations', installationData);
+    await saveToCosmosDB(app.log, INSTALLATIONS_CONTAINER, installationData);
+  });
+
+  app.on('installation.deleted', async (context) => {
+    const installationId = context.payload.installation.id;
+
+    const installationData = await fetchFromCosmosDB(app.log, INSTALLATIONS_CONTAINER, [
+      { name: '@installationId', value: installationId }
+    ]);
+
+    if (!installationData) {
+      app.log.error(`No installation data found for installation ${installationId}`);
+      return;
+    }
+
+    installationData.status = 'deleted';
+
+    await updateCosmosDB(app.log, INSTALLATIONS_CONTAINER, installationData.id, installationId, installationData);
+
+  });
+
+  app.on(['installation_repositories.added', 'installation_repositories.removed'], async (context) => {
+    const installationId = context.payload.installation.id;
+    const repositories = context.payload.repositories;
+
+    const installationData = await fetchFromCosmosDB(app.log, 'Installations', [
+      { name: '@installationId', value: installationId }
+    ]);
+
+    if (!installationData) {
+      app.log.error(`No installation data found for installation ${installationId}`);
+      return;
+    }
+
+    installationData.repositoriesCount += repositories.length;
+    installationData.repositories = installationData.repositories.concat(repositories);
+
+    await updateCosmosDB(app.log, INSTALLATIONS_CONTAINER, installationData.id, installationId, installationData);
+
   });
 
   app.on('marketplace_purchase', async (context) => {
     const accountId = context.payload.marketplace_purchase.account.id;
     const planId = context.payload.marketplace_purchase.plan.id;
     const planName = context.payload.marketplace_purchase.plan.name;
-    const eventType = context.payload.action;
+    const eventType = context.payload.marketplace_purchase.action;
+    const effective_date = context.payload.marketplace_purchase.effective_date;
+    const enterprise = context.payload.marketplace_purchase.account.enterprise;
+    const organization = context.payload.marketplace_purchase.account.organization;
 
     const subscriptionData = {
       accountId,
       planId,
       planName,
       eventType,
-      eventTime: new Date().toISOString()
+      eventTime: new Date().toISOString(),
+      effective_date,
+      enterprise
     };
 
-    await saveToCosmosDB('Subscriptions', subscriptionData);
+    await saveToCosmosDB(app.log, 'Subscriptions', subscriptionData);
   });
 
   app.on(['pull_request.opened', 'pull_request.synchronize'], async (context) => {
