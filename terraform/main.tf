@@ -42,7 +42,7 @@ resource "azurerm_service_plan" "main" {
   sku_name            = "Y1"
 }
 
-resource "azurerm_windows_function_app" "nodejs" {
+resource "azurerm_linux_function_app" "nodejs" {
   name                       = var.nodejs_function_app_name
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
@@ -65,6 +65,9 @@ resource "azurerm_windows_function_app" "nodejs" {
     "APP_ID" = var.app_id
     "WEBHOOK_SECRET" = var.webhook_secret
     "PRIVATE_KEY" = var.private_key
+    "COSMOS_CONNECTION_STRING" = azurerm_cosmosdb_account.main.primary_sql_connection_string
+    "DATABASE_NAME" = azurerm_cosmosdb_sql_database.main.name
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.main.instrumentation_key
   }
 } 
 

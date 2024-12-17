@@ -15,22 +15,23 @@
   "scripts": {
     "start": "func start",
     "test": "node --test",
-    "deploy" : "func azure functionapp publish prompt-shield-github-app --javascript",
+    "deploy": "func azure functionapp publish prompt-shield-github-app --javascript",
     "terraform:deploy": "cd terraform && terraform init && terraform apply -auto-approve"
   },
   "devDependencies": {
+    "azure-functions-core-tools": "^4.x",
     "jest": "^29.7.0",
     "nock": "^14.0.0-beta.5",
     "probot": "^13.4.0",
-    "smee-client": "^2.0.0",
-    "azure-functions-core-tools": "^4.x"
+    "smee-client": "^2.0.0"
   },
   "engines": {
     "node": ">= 18"
   },
   "type": "module",
   "dependencies": {
-    "@probot/adapter-azure-functions": "^1.1.0",
-    "@azure/functions": "^4.6.0"
+    "@azure/cosmos": "^4.2.0",
+    "@azure/functions": "^4.6.0",
+    "@probot/adapter-azure-functions": "^1.1.0"
   }
 }
