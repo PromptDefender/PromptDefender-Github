@@ -52,16 +52,29 @@ export const run_score = async (functions, logger) => {
         const { data: fileContent } = await functions.retrieveContent(file);
 
         const prompt = Buffer.from(fileContent.content, 'base64').toString();
+        var scoreResponse;
 
-        const response = await retrieveScore(prompt, logger.info);
-        logger.info(`Prompt score: ${response}`);
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            logger.info(`Attempt ${attempt} to retrieve score for prompt`);
+            scoreResponse = await retrieveScore(prompt, logger);
+            logger.info(`Prompt score: ${scoreResponse.response.key}`);
+            logger.info(`Prompt response: ${JSON.stringify(scoreResponse.response)}`);
+            break; // Exit loop if successful
+          } catch (error) {
+            logger.error(`Attempt ${attempt} failed: ${error.message}`);
+            if (attempt === 3) {
+              throw new Error(`Failed to retrieve score after 3 attempts: ${error.message}`);
+            }
+          }
+        }
 
         responses.push({
             file: file.filename,
-            score: response.score,
-            explanation: response.explanation,
-            hash: crypto.createHash('sha256').update(prompt).digest('hex'),
-            passOrFail: response.score >= config.threshold ? 'pass' : 'fail',
+            score: scoreResponse.response.score,
+            explanation: scoreResponse.response.explanation,
+            hash: scoreResponse.key,
+            passOrFail: scoreResponse.response.score >= config.threshold ? 'pass' : 'fail',
         });
     }
 
@@ -89,7 +102,6 @@ const processResults = async (logger, functions, threshold, responses, statusId)
         return `
       ## Prompt Defence - ${response.passOrFail.toUpperCase()} ${badge}
       Threshold is set to ${threshold}
-      
       ### File: ${response.file}
       - **Score**: ${response.score}
       - **Explanation**: ${response.explanation}

@@ -5,17 +5,30 @@ const DEFENDER_URL = process.env.DEFENDER_URL;
 const DATABASE_NAME = process.env.DATABASE_NAME;
 
 export const retrieveScore = async (prompt, logFunction) => {
-  return await fetch(`${DEFENDER_URL}/score`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      prompt: prompt
-    })
-  })
-    .then(res => res.json())
-    .then(data => data.response);
+  try {
+    logFunction.info('Retrieving score for prompt to URL ' + DEFENDER_URL);
+    const response = await fetch(`${DEFENDER_URL}/score`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: prompt
+      })
+    });
+
+    if (!response.ok) {
+      logFunction.error('Error retrieving score', response.statusText);
+      throw new Error(`Error retrieving score: ${response.statusText}`);
+    }
+
+    const r = JSON.stringify(await response.json());
+    return JSON.parse(r);
+
+  } catch (error) {
+    logFunction.error('Fetch error', error);
+    throw error;
+  }
 };
 
 export const SUBSCRIPTIONS_CONTAINER = 'Subscriptions';

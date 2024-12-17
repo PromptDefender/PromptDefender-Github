@@ -96,7 +96,7 @@ const pullRequestFunctions = (context, logger) => {
 }
 
 export default (app) => {
-  app.on('installation.created', async (context) => {
+  app.on(['installation.created', 'installation.deleted'], async (context) => {
     const installationId = context.payload.installation.id;
     const accountId = context.payload.installation.account.id;
     const accountType = context.payload.installation.account.type;
@@ -113,47 +113,22 @@ export default (app) => {
       sender: context.payload.sender,
       enterprise: context.payload.enterprise,
       repositories: context.payload.repositories,
-      status: 'created'
+      action: context.payload.action
     };
 
     await saveToCosmosDB(app.log, INSTALLATIONS_CONTAINER, installationData);
   });
 
-  app.on('installation.deleted', async (context) => {
-    const installationId = context.payload.installation.id;
-
-    const installationData = await fetchFromCosmosDB(app.log, INSTALLATIONS_CONTAINER, [
-      { name: '@installationId', value: installationId }
-    ]);
-
-    if (!installationData) {
-      app.log.error(`No installation data found for installation ${installationId}`);
-      return;
-    }
-
-    installationData.status = 'deleted';
-
-    await updateCosmosDB(app.log, INSTALLATIONS_CONTAINER, installationData.id, installationId, installationData);
-
-  });
-
   app.on(['installation_repositories.added', 'installation_repositories.removed'], async (context) => {
     const installationId = context.payload.installation.id;
-    const repositories = context.payload.repositories;
 
-    const installationData = await fetchFromCosmosDB(app.log, 'Installations', [
-      { name: '@installationId', value: installationId }
-    ]);
+    const repositoryData = {
+      installationId,
+      repositories: context.payload.repositories,
+      action: context.payload.action
+    };
 
-    if (!installationData) {
-      app.log.error(`No installation data found for installation ${installationId}`);
-      return;
-    }
-
-    installationData.repositoriesCount += repositories.length;
-    installationData.repositories = installationData.repositories.concat(repositories);
-
-    await updateCosmosDB(app.log, INSTALLATIONS_CONTAINER, installationData.id, installationId, installationData);
+    await saveToCosmosDB(app.log, INSTALLATIONS_CONTAINER, repositoryData);
 
   });
 

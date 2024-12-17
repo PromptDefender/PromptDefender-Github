@@ -42,7 +42,7 @@ resource "azurerm_service_plan" "main" {
   sku_name            = "Y1"
 }
 
-resource "azurerm_windows_function_app" "nodejs" {
+resource "azurerm_linux_function_app" "nodejs" {
   name                       = var.nodejs_function_app_name
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
