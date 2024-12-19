@@ -77,11 +77,18 @@ export async function sendSuccessStatus(context, statusId, conclusion, pullReque
         check_run_id: statusId,
         status: 'completed',
         conclusion: conclusion,
-        details_url: `${DEFENDER_URL}/score/${pullRequest.head.sha}`,
+        // details_url: `${DEFENDER_URL}/score/${pullRequest.head.sha}`,
         output: {
           title: 'Checks Complete',
-          summary: (failedChecks > 0) ? 'One or more checks have failed.' : 'All checks have passed.',
+          summary: (failedChecks > 0) ? 'One or more checks have *failed*.' : 'All checks have *passed*.',
           text: summary,
+          images : [
+            {
+              alt: 'Prompt Defence',
+              image_url: (failedChecks > 0) ? 'https://img.shields.io/badge/Status-Fail-red' : 'https://img.shields.io/badge/Status-Pass-green',
+              caption: (failedChecks > 0) ? 'Failed' : 'Passed'
+            }
+          ]
         },
       });
     } catch (error) {

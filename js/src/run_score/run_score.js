@@ -83,6 +83,7 @@ export const run_score = async (functions, logger) => {
     await processResults(logger, functions, config.threshold, responses, statusCreated.data.id);
 }
 
+
 const processResults = async (logger, functions, threshold, responses, statusId) => {
 
     if (!statusId) {
@@ -97,20 +98,22 @@ const processResults = async (logger, functions, threshold, responses, statusId)
         conclusion = 'failure';
     }
 
-    const summary = responses.map(response => {
+    let summary = responses.map(response => {
         const badge = response.passOrFail === 'pass' ? '![Pass](https://img.shields.io/badge/Status-Pass-green)' : '![Fail](https://img.shields.io/badge/Status-Fail-red)';
-        return `
-      ## Prompt Defence - ${response.passOrFail.toUpperCase()} ${badge}
-      Threshold is set to ${threshold}
-      ### File: ${response.file}
-      - **Score**: ${response.score}
-      - **Explanation**: ${response.explanation}
-      - **Pass/Fail**: ${response.passOrFail} 
-      - [Prompt Defence - test results](${DEFENDER_URL}/score/${response.hash})
-      `;
-    }).join('\n\n'); // Ensure each section is separated by an empty line
+        let d = [];
+        d.push(`${badge}`);
+        d.push(`### File: ${response.file} `);
+        d.push(`- **Score**: ${response.score}`);
+        d.push(`- **Explanation**: ${response.explanation}`);
+        d.push(`- **Pass/Fail**: ${response.passOrFail}`);
+        d.push(`- [Prompt Defence - test results](${DEFENDER_URL}/score/${response.hash})`);
+        return d.join('\n');
+    }).join('\n\n'); 
 
-    await functions.sendSuccessStatus(statusId, conclusion, failedChecks, summary);
+    let result = `## Prompt Defence - ${conclusion}\nThreshold is set to ${threshold}\n\n`
+
+    result += summary;
+    await functions.sendSuccessStatus(statusId, conclusion, failedChecks, result);
 };
 
 const retrievePromptsFromFiles = (files, config) => {
